@@ -27,13 +27,13 @@ public class Room extends BaseAuditableEntity {
     @Column(nullable = false, length = 20)
     private RoomStatus status = RoomStatus.ACTIVE;
 
-    @Column(name = "mux_space_id")
-    private String muxSpaceId;
+    @Column(name = "livekit_room_name")
+    private String livekitRoomName;
 
-    public Room(String name, String description, User createdBy, String muxSpaceId) {
+    public Room(String name, String description, User createdBy, String livekitRoomName) {
         this.name = name;
         this.description = description;
         this.createdBy = createdBy;
-        this.muxSpaceId = muxSpaceId;
+        this.livekitRoomName = livekitRoomName;
     }
 }

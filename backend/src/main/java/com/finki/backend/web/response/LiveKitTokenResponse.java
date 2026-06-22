@@ -3,8 +3,9 @@ package com.finki.backend.web.response;
 import lombok.Builder;
 
 @Builder
-public record MuxTokenResponse(
+public record LiveKitTokenResponse(
         String token,
-        String spaceId
+        String serverUrl,
+        String roomName
 ) {
 }

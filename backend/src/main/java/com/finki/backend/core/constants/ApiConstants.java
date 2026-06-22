@@ -11,5 +11,4 @@ public final class ApiConstants {
     public static final String ROOMS_PATH = API_BASE_PATH + "/rooms";
     public static final String INVITES_PATH = API_BASE_PATH + "/invites";
     public static final String USERS_PATH = API_BASE_PATH + "/users";
-    public static final String MUX_PATH = API_BASE_PATH + "/mux";
 }

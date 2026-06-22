@@ -15,7 +15,7 @@ CREATE TABLE rooms (
     description VARCHAR(500),
     created_by BIGINT NOT NULL REFERENCES users(id),
     status VARCHAR(20) NOT NULL DEFAULT 'ACTIVE',
-    mux_space_id VARCHAR(255),
+    livekit_room_name VARCHAR(255),
     created_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW(),
     updated_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW()
 );

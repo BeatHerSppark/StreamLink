@@ -8,7 +8,7 @@ export class ProtectedConstants {
   }
 
   // No actual API keys needed for frontend at this time.
-  // Mux credentials are server-side only.
+  // LiveKit credentials are server-side only.
   // Add any client-side keys here if required in the future.
   static readonly DUMMY_PLACEHOLDER = 'REPLACE_ME';
 }

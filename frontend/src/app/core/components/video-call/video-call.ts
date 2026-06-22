@@ -1,7 +1,6 @@
 import { Component, ElementRef, inject, input, OnDestroy, OnInit, signal } from '@angular/core';
 import { Router } from '@angular/router';
-import { Space, SpaceEvent, getUserMedia, TrackKind } from '@mux/spaces-web';
-import type { LocalParticipant, RemoteParticipant, RemoteTrack, LocalTrack } from '@mux/spaces-web';
+import { Room, RoomEvent, Track, type RemoteParticipant, type RemoteTrack } from 'livekit-client';
 import { lastValueFrom } from 'rxjs';
 import { RoomService } from '../../services/room.service';
 import { RouteConstants } from '../../../constants/route.constants';
@@ -26,8 +25,7 @@ export class VideoCallComponent implements OnInit, OnDestroy {
 
   readonly roomId = input.required<number>();
 
-  space = signal<Space | null>(null);
-  localParticipant = signal<LocalParticipant | null>(null);
+  room = signal<Room | null>(null);
   tiles = signal<VideoTile[]>([]);
   isLoading = signal(true);
   error = signal<string | null>(null);
@@ -36,46 +34,61 @@ export class VideoCallComponent implements OnInit, OnDestroy {
 
   async ngOnInit(): Promise<void> {
     try {
-      const muxToken = await lastValueFrom(this.roomService.getMuxToken(this.roomId()));
-      if (!muxToken) {
-        throw new Error('Failed to get Mux token');
+      const liveKitToken = await lastValueFrom(this.roomService.getLiveKitToken(this.roomId()));
+      if (!liveKitToken) {
+        throw new Error('Failed to get LiveKit token');
       }
 
-      const spaceInstance = new Space(muxToken.token);
-      this.space.set(spaceInstance);
+      const roomInstance = new Room();
+      this.room.set(roomInstance);
 
-      spaceInstance.on(SpaceEvent.ParticipantJoined, (participant: RemoteParticipant) => {
+      roomInstance.on(RoomEvent.ParticipantConnected, (participant: RemoteParticipant) => {
         this.addTile(participant);
       });
 
-      spaceInstance.on(SpaceEvent.ParticipantLeft, (participant: RemoteParticipant) => {
-        this.removeTile(participant.id);
+      roomInstance.on(RoomEvent.ParticipantDisconnected, (participant: RemoteParticipant) => {
+        this.removeTile(participant.identity);
       });
 
-      spaceInstance.on(SpaceEvent.ParticipantTrackSubscribed, (participant: RemoteParticipant, track: RemoteTrack) => {
-        this.handleTrackSubscribed(participant.id, track);
-      });
-
-      spaceInstance.on(SpaceEvent.ParticipantTrackUnsubscribed, (participant: RemoteParticipant, track: RemoteTrack) => {
-        this.handleTrackUnsubscribed(participant.id, track);
-      });
-
-      const local = await spaceInstance.join();
-      this.localParticipant.set(local);
-
-      const localTracks = await getUserMedia({ audio: true, video: true });
-      await local.publishTracks(localTracks);
-
-      // Attach local video
-      setTimeout(() => {
-        const localVideo = this.elRef.nativeElement.querySelector('video[data-participant-id="local"]') as HTMLVideoElement | null;
-        if (localVideo) {
-          const videoTrack = local.getVideoTracks()[0];
-          if (videoTrack) {
-            videoTrack.attach(localVideo);
-          }
+      roomInstance.on(RoomEvent.TrackSubscribed, (track, _publication, participant) => {
+        if (participant.isLocal) return;
+        if (track.kind === Track.Kind.Video) {
+          this.handleTrackSubscribed(participant.identity, track as RemoteTrack);
         }
-      }, 0);
+      });
+
+      roomInstance.on(RoomEvent.TrackUnsubscribed, (track, _publication, participant) => {
+        if (participant.isLocal) return;
+        if (track.kind === Track.Kind.Video) {
+          this.handleTrackUnsubscribed(participant.identity);
+        }
+      });
+
+      roomInstance.on(RoomEvent.LocalTrackPublished, (publication) => {
+        if (publication.track?.kind === Track.Kind.Video) {
+          setTimeout(() => {
+            const localVideo = this.elRef.nativeElement.querySelector('video[data-participant-id="local"]') as HTMLVideoElement | null;
+            if (localVideo) {
+              publication.track?.attach(localVideo);
+            }
+          }, 0);
+        }
+      });
+
+      await roomInstance.connect(liveKitToken.serverUrl, liveKitToken.token);
+      await roomInstance.localParticipant.setCameraEnabled(true);
+      await roomInstance.localParticipant.setMicrophoneEnabled(true);
+
+      // Attach the initial local video track.
+      const localVideoPublication = Array.from(roomInstance.localParticipant.videoTrackPublications.values())[0];
+      if (localVideoPublication?.track) {
+        setTimeout(() => {
+          const localVideo = this.elRef.nativeElement.querySelector('video[data-participant-id="local"]') as HTMLVideoElement | null;
+          if (localVideo) {
+            localVideoPublication.track!.attach(localVideo);
+          }
+        }, 0);
+      }
 
       this.isLoading.set(false);
     } catch (err: any) {
@@ -85,47 +98,39 @@ export class VideoCallComponent implements OnInit, OnDestroy {
   }
 
   ngOnDestroy(): void {
-    this.space()?.leave();
+    this.room()?.disconnect();
   }
 
   leave(): void {
-    this.space()?.leave();
+    this.room()?.disconnect();
     this.router.navigate([RouteConstants.ROOM_DETAIL_ROUTE(this.roomId())]);
   }
 
-  toggleMic(): void {
-    const local = this.localParticipant();
-    if (!local) return;
-    const audioTracks = local.getAudioTracks();
-    if (this.isMicMuted()) {
-      audioTracks.forEach((t: LocalTrack) => t.unMute());
-      this.isMicMuted.set(false);
-    } else {
-      audioTracks.forEach((t: LocalTrack) => t.mute());
-      this.isMicMuted.set(true);
-    }
+  async toggleMic(): Promise<void> {
+    const room = this.room();
+    if (!room) return;
+
+    const muted = !this.isMicMuted();
+    await room.localParticipant.setMicrophoneEnabled(!muted);
+    this.isMicMuted.set(muted);
   }
 
-  toggleCam(): void {
-    const local = this.localParticipant();
-    if (!local) return;
-    const videoTracks = local.getVideoTracks();
-    if (this.isCamOff()) {
-      videoTracks.forEach((t: LocalTrack) => t.unMute());
-      this.isCamOff.set(false);
-    } else {
-      videoTracks.forEach((t: LocalTrack) => t.mute());
-      this.isCamOff.set(true);
-    }
+  async toggleCam(): Promise<void> {
+    const room = this.room();
+    if (!room) return;
+
+    const off = !this.isCamOff();
+    await room.localParticipant.setCameraEnabled(!off);
+    this.isCamOff.set(off);
   }
 
   private addTile(participant: RemoteParticipant): void {
     this.tiles.update((tiles) => [
       ...tiles,
       {
-        id: participant.id,
+        id: participant.identity,
         isLocal: false,
-        displayName: participant.displayName || 'Guest',
+        displayName: participant.name || participant.identity || 'Guest',
         hasVideo: false,
       },
     ]);
@@ -136,24 +141,20 @@ export class VideoCallComponent implements OnInit, OnDestroy {
   }
 
   private handleTrackSubscribed(participantId: string, track: RemoteTrack): void {
-    if (track.kind === TrackKind.Video) {
-      this.tiles.update((tiles) =>
-        tiles.map((t) => (t.id === participantId ? { ...t, hasVideo: true } : t))
-      );
-      setTimeout(() => {
-        const videoEl = this.elRef.nativeElement.querySelector(`video[data-participant-id="${participantId}"]`) as HTMLVideoElement | null;
-        if (videoEl) {
-          track.attach(videoEl);
-        }
-      }, 0);
-    }
+    this.tiles.update((tiles) =>
+      tiles.map((t) => (t.id === participantId ? { ...t, hasVideo: true } : t))
+    );
+    setTimeout(() => {
+      const videoEl = this.elRef.nativeElement.querySelector(`video[data-participant-id="${participantId}"]`) as HTMLVideoElement | null;
+      if (videoEl) {
+        track.attach(videoEl);
+      }
+    }, 0);
   }
 
-  private handleTrackUnsubscribed(participantId: string, track: RemoteTrack): void {
-    if (track.kind === TrackKind.Video) {
-      this.tiles.update((tiles) =>
-        tiles.map((t) => (t.id === participantId ? { ...t, hasVideo: false } : t))
-      );
-    }
+  private handleTrackUnsubscribed(participantId: string): void {
+    this.tiles.update((tiles) =>
+      tiles.map((t) => (t.id === participantId ? { ...t, hasVideo: false } : t))
+    );
   }
 }

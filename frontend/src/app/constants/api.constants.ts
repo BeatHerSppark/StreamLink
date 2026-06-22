@@ -22,7 +22,7 @@ export class ApiConstants {
   static readonly CLOSE_ROOM_URL = (id: number) => `${ApiConstants.ROOMS_PATH}/${id}`;
   static readonly JOIN_ROOM_URL = (id: number) => `${ApiConstants.ROOMS_PATH}/${id}/join`;
   static readonly LEAVE_ROOM_URL = (id: number) => `${ApiConstants.ROOMS_PATH}/${id}/leave`;
-  static readonly MUX_TOKEN_URL = (id: number) => `${ApiConstants.ROOMS_PATH}/${id}/token`;
+  static readonly LIVEKIT_TOKEN_URL = (id: number) => `${ApiConstants.ROOMS_PATH}/${id}/token`;
 
   static readonly ROOM_INVITES_URL = (roomId: number) => `${ApiConstants.ROOMS_PATH}/${roomId}/invites`;
   static readonly INVITE_BY_TOKEN_URL = (token: string) => `${ApiConstants.INVITES_PATH}/${token}`;

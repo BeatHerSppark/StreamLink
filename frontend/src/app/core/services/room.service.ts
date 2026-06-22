@@ -5,7 +5,7 @@ import { ApiConstants } from '../../constants/api.constants';
 import { CreateRoomRequest } from './request/create-room.request';
 import { RoomResponse } from './response/room.response';
 import { RoomDetailResponse } from './response/room-detail.response';
-import { MuxTokenResponse } from './response/mux-token.response';
+import { LiveKitTokenResponse } from './response/livekit-token.response';
 
 @Injectable({
   providedIn: 'root',
@@ -41,7 +41,7 @@ export class RoomService {
     return this.http.post<void>(ApiConstants.LEAVE_ROOM_URL(id), {});
   }
 
-  getMuxToken(id: number): Observable<MuxTokenResponse> {
-    return this.http.post<MuxTokenResponse>(ApiConstants.MUX_TOKEN_URL(id), {});
+  getLiveKitToken(id: number): Observable<LiveKitTokenResponse> {
+    return this.http.post<LiveKitTokenResponse>(ApiConstants.LIVEKIT_TOKEN_URL(id), {});
   }
 }

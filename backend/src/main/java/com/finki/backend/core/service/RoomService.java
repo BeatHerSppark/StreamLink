@@ -26,7 +26,7 @@ public class RoomService {
     private final RoomRepository roomRepository;
     private final RoomParticipantRepository roomParticipantRepository;
     private final UserService userService;
-    private final MuxService muxService;
+    private final LiveKitService liveKitService;
 
     @Transactional(readOnly = true)
     public List<Room> getAllActiveRooms() {
@@ -48,15 +48,15 @@ public class RoomService {
     public Room createRoom(Long userId, String name, String description) {
         User user = userService.getUserById(userId);
 
-        String muxSpaceId = muxService.createSpace(name);
+        String livekitRoomName = liveKitService.createRoomName();
 
-        Room room = new Room(name, description, user, muxSpaceId);
+        Room room = new Room(name, description, user, livekitRoomName);
         Room savedRoom = roomRepository.save(room);
 
         RoomParticipant hostParticipant = new RoomParticipant(savedRoom, user, ParticipantRole.HOST);
         roomParticipantRepository.save(hostParticipant);
 
-        log.info("User {} created room {} with Mux space {}", userId, savedRoom.getId(), muxSpaceId);
+        log.info("User {} created room {} with LiveKit room {}", userId, savedRoom.getId(), livekitRoomName);
         return savedRoom;
     }
 
@@ -76,10 +76,6 @@ public class RoomService {
 
         room.setStatus(RoomStatus.CLOSED);
         roomRepository.save(room);
-
-        if (room.getMuxSpaceId() != null) {
-            muxService.deleteSpace(room.getMuxSpaceId());
-        }
 
         log.info("User {} closed room {}", userId, roomId);
     }

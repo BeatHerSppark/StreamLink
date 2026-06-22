@@ -4,12 +4,12 @@ import com.finki.backend.core.constants.ApiConstants;
 import com.finki.backend.core.domain.Room;
 import com.finki.backend.core.domain.RoomParticipant;
 import com.finki.backend.core.security.UserPrincipal;
-import com.finki.backend.core.service.MuxService;
+import com.finki.backend.core.service.LiveKitService;
 import com.finki.backend.core.service.RoomService;
 import com.finki.backend.core.service.UserService;
 import com.finki.backend.web.extensions.RoomExtensions;
 import com.finki.backend.web.request.CreateRoomRequest;
-import com.finki.backend.web.response.MuxTokenResponse;
+import com.finki.backend.web.response.LiveKitTokenResponse;
 import com.finki.backend.web.response.RoomDetailResponse;
 import com.finki.backend.web.response.RoomResponse;
 import jakarta.validation.Valid;
@@ -27,7 +27,7 @@ import java.util.List;
 public class RoomController {
 
     private final RoomService roomService;
-    private final MuxService muxService;
+    private final LiveKitService liveKitService;
     private final UserService userService;
 
     @GetMapping
@@ -94,18 +94,19 @@ public class RoomController {
     }
 
     @PostMapping("/{id}/token")
-    public ResponseEntity<MuxTokenResponse> getMuxToken(
+    public ResponseEntity<LiveKitTokenResponse> getLiveKitToken(
             @PathVariable Long id,
             @AuthenticationPrincipal UserPrincipal principal
     ) {
         Room room = roomService.getRoomById(id);
         String displayName = userService.getUserById(principal.getUserId()).getName();
 
-        String token = muxService.createParticipantToken(room.getMuxSpaceId(), displayName);
+        String token = liveKitService.createParticipantToken(room.getLivekitRoomName(), displayName);
 
-        return ResponseEntity.ok(MuxTokenResponse.builder()
+        return ResponseEntity.ok(LiveKitTokenResponse.builder()
                 .token(token)
-                .spaceId(room.getMuxSpaceId())
+                .serverUrl(liveKitService.getLiveKitUrl())
+                .roomName(room.getLivekitRoomName())
                 .build());
     }
 }
