@@ -30,10 +30,14 @@ public class Room extends BaseAuditableEntity {
     @Column(name = "livekit_room_name")
     private String livekitRoomName;
 
-    public Room(String name, String description, User createdBy, String livekitRoomName) {
+    @Column(name = "is_public", nullable = false)
+    private Boolean isPublic = true;
+
+    public Room(String name, String description, User createdBy, String livekitRoomName, Boolean isPublic) {
         this.name = name;
         this.description = description;
         this.createdBy = createdBy;
         this.livekitRoomName = livekitRoomName;
+        this.isPublic = isPublic != null ? isPublic : true;
     }
 }

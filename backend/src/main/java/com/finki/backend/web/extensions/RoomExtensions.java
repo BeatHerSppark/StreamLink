@@ -24,6 +24,7 @@ public final class RoomExtensions {
                 .name(room.getName())
                 .description(room.getDescription())
                 .status(room.getStatus())
+                .isPublic(room.getIsPublic())
                 .createdBy(UserExtensions.toResponse(room.getCreatedBy()))
                 .createdAt(room.getCreatedAt())
                 .build();
@@ -43,6 +44,7 @@ public final class RoomExtensions {
                 .name(room.getName())
                 .description(room.getDescription())
                 .status(room.getStatus())
+                .isPublic(room.getIsPublic())
                 .createdBy(UserExtensions.toResponse(room.getCreatedBy()))
                 .participants(participantResponses)
                 .createdAt(room.getCreatedAt())

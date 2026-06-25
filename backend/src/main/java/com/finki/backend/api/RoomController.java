@@ -60,7 +60,7 @@ public class RoomController {
             @Valid @RequestBody CreateRoomRequest request,
             @AuthenticationPrincipal UserPrincipal principal
     ) {
-        Room room = roomService.createRoom(principal.getUserId(), request.name(), request.description());
+        Room room = roomService.createRoom(principal.getUserId(), request.name(), request.description(), request.isPublic());
         return ResponseEntity.status(HttpStatus.CREATED).body(RoomExtensions.toResponse(room));
     }
 
@@ -71,6 +71,16 @@ public class RoomController {
     ) {
         roomService.closeRoom(id, principal.getUserId());
         return ResponseEntity.noContent().build();
+    }
+
+    @PatchMapping("/{id}/visibility")
+    public ResponseEntity<RoomResponse> updateRoomVisibility(
+            @PathVariable Long id,
+            @Valid @RequestBody com.finki.backend.web.request.UpdateRoomVisibilityRequest request,
+            @AuthenticationPrincipal UserPrincipal principal
+    ) {
+        Room room = roomService.updateVisibility(id, principal.getUserId(), request.isPublic());
+        return ResponseEntity.ok(RoomExtensions.toResponse(room));
     }
 
     @PostMapping("/{id}/join")

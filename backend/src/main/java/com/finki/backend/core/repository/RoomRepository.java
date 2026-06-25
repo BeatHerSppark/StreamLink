@@ -24,8 +24,8 @@ public interface RoomRepository extends JpaRepository<Room, Long> {
     List<Room> findAllByCreatorAndStatus(@Param("userId") Long userId, @Param("status") RoomStatus status);
 
     @EntityGraph(attributePaths = {"createdBy"})
-    @Query("SELECT r FROM Room r WHERE r.status = :status ORDER BY r.createdAt DESC")
-    List<Room> findAllByStatus(@Param("status") RoomStatus status);
+    @Query("SELECT r FROM Room r WHERE r.status = :status AND r.isPublic = true ORDER BY r.createdAt DESC")
+    List<Room> findAllPublicByStatus(@Param("status") RoomStatus status);
 
     @Modifying
     @Query("UPDATE Room r SET r.status = :status WHERE r.id = :id")

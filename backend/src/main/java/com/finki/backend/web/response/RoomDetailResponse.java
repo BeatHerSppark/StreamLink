@@ -12,6 +12,7 @@ public record RoomDetailResponse(
         String name,
         String description,
         RoomStatus status,
+        Boolean isPublic,
         UserResponse createdBy,
         List<ParticipantResponse> participants,
         Instant createdAt

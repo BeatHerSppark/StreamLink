@@ -16,6 +16,9 @@
               <span class="badge" [class.badge-success]="room()!.status === RoomStatus.ACTIVE" [class.badge-muted]="room()!.status === RoomStatus.CLOSED">
                 {{ room()!.status }}
               </span>
+              <span class="badge" [class.badge-success]="room()!.isPublic" [class.badge-muted]="!room()!.isPublic">
+                {{ room()!.isPublic ? 'Public' : 'Private' }}
+              </span>
               <span class="badge badge-muted">{{ room()!.participants.length }} participant(s)</span>
             </div>
             <h1>{{ room()!.name }}</h1>
@@ -28,11 +31,18 @@
           </div>
           <div class="detail-actions">
             @if (room()!.status === RoomStatus.ACTIVE && authService.isAuthenticated()) {
-              <button class="btn btn-primary" [disabled]="actionLoading()" (click)="joinRoom()">
-                {{ actionLoading() ? 'Joining...' : (isParticipant() ? 'Enter Call' : 'Join Call') }}
-              </button>
+              @if (!room()!.isPublic && !isParticipant() && !isHost()) {
+                <button class="btn btn-secondary" disabled>🔒 Invite-only</button>
+              } @else {
+                <button class="btn btn-primary" [disabled]="actionLoading()" (click)="joinRoom()">
+                  {{ actionLoading() ? 'Joining...' : (isParticipant() ? 'Enter Call' : 'Join Call') }}
+                </button>
+              }
             }
             @if (isHost() && room()!.status === RoomStatus.ACTIVE) {
+              <button class="btn btn-secondary" [disabled]="actionLoading()" (click)="toggleVisibility()">
+                {{ room()!.isPublic ? 'Make Private' : 'Make Public' }}
+              </button>
               <button class="btn btn-secondary" (click)="openInviteModal()">Create Invite</button>
               <button class="btn btn-danger" [disabled]="actionLoading()" (click)="closeRoom()">
                 Close Room

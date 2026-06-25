@@ -9,6 +9,8 @@ public record CreateRoomRequest(
         String name,
 
         @Size(max = 500, message = "Description must be at most 500 characters")
-        String description
+        String description,
+
+        Boolean isPublic
 ) {
 }

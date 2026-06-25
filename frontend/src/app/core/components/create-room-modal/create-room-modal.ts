@@ -18,6 +18,7 @@ export class CreateRoomModalComponent {
 
   name = signal('');
   description = signal('');
+  isPublic = signal(true);
   isSubmitting = signal(false);
   error = signal<string | null>(null);
 
@@ -27,6 +28,7 @@ export class CreateRoomModalComponent {
     const request: CreateRoomRequest = {
       name: this.name().trim(),
       description: this.description().trim() || undefined,
+      isPublic: this.isPublic(),
     };
 
     if (!request.name) {

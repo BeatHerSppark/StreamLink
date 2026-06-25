@@ -29,6 +29,10 @@ export class RoomService {
     return this.http.post<RoomResponse>(ApiConstants.ALL_ROOMS_URL, request);
   }
 
+  updateVisibility(id: number, isPublic: boolean): Observable<RoomResponse> {
+    return this.http.patch<RoomResponse>(ApiConstants.ROOM_VISIBILITY_URL(id), { isPublic });
+  }
+
   closeRoom(id: number): Observable<void> {
     return this.http.delete<void>(ApiConstants.CLOSE_ROOM_URL(id));
   }

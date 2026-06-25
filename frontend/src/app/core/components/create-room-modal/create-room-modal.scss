@@ -8,3 +8,14 @@
   font-size: 0.875rem;
   margin-bottom: 1rem;
 }
+
+.visibility-toggle {
+  display: flex;
+  gap: 0.5rem;
+}
+
+.form-hint {
+  font-size: 0.75rem;
+  color: $text-muted;
+  margin: 0.5rem 0 0;
+}

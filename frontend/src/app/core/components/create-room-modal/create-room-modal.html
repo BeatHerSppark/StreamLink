@@ -16,6 +16,28 @@
         <label for="room-desc">Description</label>
         <textarea id="room-desc" [(ngModel)]="description" [maxlength]="AppConstants.MAX_ROOM_DESCRIPTION_LENGTH" placeholder="What's this room about?"></textarea>
       </div>
+      <div class="form-group">
+        <label>Visibility</label>
+        <div class="visibility-toggle">
+          <button
+            type="button"
+            class="btn btn-sm"
+            [class.btn-primary]="isPublic()"
+            [class.btn-secondary]="!isPublic()"
+            (click)="isPublic.set(true)">
+            🌐 Public
+          </button>
+          <button
+            type="button"
+            class="btn btn-sm"
+            [class.btn-primary]="!isPublic()"
+            [class.btn-secondary]="isPublic()"
+            (click)="isPublic.set(false)">
+            🔒 Private
+          </button>
+        </div>
+        <p class="form-hint">{{ isPublic() ? 'Anyone can discover and join this room from Explore.' : 'Only people with an invite link can join this room.' }}</p>
+      </div>
     </div>
     <div class="modal-footer">
       <button class="btn btn-secondary" (click)="close()">Cancel</button>

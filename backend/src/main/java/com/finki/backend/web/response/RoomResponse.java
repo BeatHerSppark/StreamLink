@@ -11,6 +11,7 @@ public record RoomResponse(
         String name,
         String description,
         RoomStatus status,
+        Boolean isPublic,
         UserResponse createdBy,
         Instant createdAt
 ) {

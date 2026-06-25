@@ -30,7 +30,7 @@ public class RoomService {
 
     @Transactional(readOnly = true)
     public List<Room> getAllActiveRooms() {
-        return roomRepository.findAllByStatus(RoomStatus.ACTIVE);
+        return roomRepository.findAllPublicByStatus(RoomStatus.ACTIVE);
     }
 
     @Transactional(readOnly = true)
@@ -59,15 +59,18 @@ public class RoomService {
     }
 
     @Transactional
-    public Room createRoom(Long userId, String name, String description) {
+    public Room createRoom(Long userId, String name, String description, Boolean isPublic) {
         User user = userService.getUserById(userId);
 
         String livekitRoomName = liveKitService.createRoomName();
 
-        Room room = new Room(name, description, user, livekitRoomName);
+        Room room = new Room(name, description, user, livekitRoomName, isPublic != null ? isPublic : true);
         Room savedRoom = roomRepository.save(room);
 
-        log.info("User {} created room {} with LiveKit room {}", userId, savedRoom.getId(), livekitRoomName);
+        RoomParticipant hostParticipant = new RoomParticipant(savedRoom, user, ParticipantRole.HOST);
+        roomParticipantRepository.save(hostParticipant);
+
+        log.info("User {} created room {} with LiveKit room {} (public={})", userId, savedRoom.getId(), livekitRoomName, savedRoom.getIsPublic());
         return savedRoom;
     }
 
@@ -92,11 +95,31 @@ public class RoomService {
     }
 
     @Transactional
+    public Room updateVisibility(Long roomId, Long userId, Boolean isPublic) {
+        Room room = getRoomById(roomId);
+
+        if (!roomRepository.existsByIdAndCreatorId(roomId, userId)) {
+            throw new ForbiddenException("Only the room host can change room visibility");
+        }
+
+        room.setIsPublic(isPublic != null ? isPublic : true);
+        Room updated = roomRepository.save(room);
+
+        log.info("User {} set room {} public={}", userId, roomId, updated.getIsPublic());
+        return updated;
+    }
+
+    @Transactional
     public Room joinRoom(Long roomId, Long userId) {
         Room room = getRoomById(roomId);
 
         if (room.getStatus() != RoomStatus.ACTIVE) {
             throw new BadRequestException("Room is not active");
+        }
+
+        if (Boolean.FALSE.equals(room.getIsPublic()) && !room.getCreatedBy().getId().equals(userId)) {
+            roomParticipantRepository.findActiveByRoomAndUser(roomId, userId)
+                    .orElseThrow(() -> new ForbiddenException("This room is private. You need an invite link to join."));
         }
 
         User user = userService.getUserById(userId);

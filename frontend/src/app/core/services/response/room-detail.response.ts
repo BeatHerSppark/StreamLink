@@ -7,6 +7,7 @@ export interface RoomDetailResponse {
   name: string;
   description?: string;
   status: RoomStatus;
+  isPublic: boolean;
   createdBy: UserResponse;
   participants: ParticipantResponse[];
   createdAt: string;

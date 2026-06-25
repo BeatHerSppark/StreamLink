@@ -6,6 +6,7 @@ export interface RoomResponse {
   name: string;
   description?: string;
   status: RoomStatus;
+  isPublic: boolean;
   createdBy: UserResponse;
   createdAt: string;
 }

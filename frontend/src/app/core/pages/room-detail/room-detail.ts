@@ -114,6 +114,23 @@ export class RoomDetailPage implements OnInit {
     });
   }
 
+  toggleVisibility(): void {
+    const room = this.room();
+    if (!room || !this.isHost()) return;
+    const newVisibility = !room.isPublic;
+    this.actionLoading.set(true);
+    this.roomService.updateVisibility(room.id, newVisibility).subscribe({
+      next: (updated) => {
+        this.actionLoading.set(false);
+        this.room.set({ ...room, isPublic: updated.isPublic });
+      },
+      error: (err) => {
+        this.actionLoading.set(false);
+        this.error.set(err.error?.message || 'Failed to update visibility');
+      },
+    });
+  }
+
   openInviteModal(): void {
     this.showInviteModal.set(true);
   }
